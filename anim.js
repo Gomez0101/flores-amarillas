@@ -20,11 +20,18 @@ function ocultarTitulo() {
 var playButton = document.querySelector("#play");
 
 function iniciarMusica() {
-  audio.play().then(function () {
-    playButton.hidden = true;
-  }).catch(function () {
+  try {
+    var intento = audio.play();
+    if (intento && intento.then) {
+      intento.then(function () {
+        playButton.hidden = true;
+      }).catch(function () {
+        playButton.hidden = false;
+      });
+    }
+  } catch (e) {
     playButton.hidden = false;
-  });
+  }
 }
 
 playButton.addEventListener("click", iniciarMusica);
@@ -219,12 +226,21 @@ function crearFotito() {
   heartsLayer.appendChild(photo);
 }
 
-if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-  setTimeout(function () {
-    setInterval(crearCorazon, HEART_INTERVAL);
-    crearFrase();
-    setInterval(crearFrase, PHRASE_INTERVAL);
-    crearFotito();
-    setInterval(crearFotito, PHOTO_INTERVAL);
-  }, HEART_START_DELAY);
+// Arranca corazones, frases y fotitos (siempre, aunque el celular tenga el ahorro de batería activado)
+function repetir(fn, intervalo) {
+  function seguro() {
+    try {
+      fn();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  seguro();
+  setInterval(seguro, intervalo);
 }
+
+setTimeout(function () {
+  repetir(crearCorazon, HEART_INTERVAL);
+  repetir(crearFrase, PHRASE_INTERVAL);
+  repetir(crearFotito, PHOTO_INTERVAL);
+}, HEART_START_DELAY);
